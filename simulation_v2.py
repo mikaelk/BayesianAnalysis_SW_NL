@@ -307,6 +307,7 @@ for i2 in range(2):
                      recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
         output_file.close()
         
+        print('output written to %s' % filename_run1)
         print('Sleeping 30 secs...')
         time.sleep(30)
         
@@ -325,3 +326,5 @@ for i2 in range(2):
                      recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
         
         output_file2.close()
+        print('output written to %s, ready for next date' % filename_run2)
+        
