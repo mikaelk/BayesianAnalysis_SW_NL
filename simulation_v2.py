@@ -271,55 +271,57 @@ def Ageing(particle, fieldset, time):
 #releasing three times separately, to prevent having to advect once for 6 years resulting in long runtimes and large files with lots of redundant data
 startdatelist = ['2020-01-01', '2018-01-01', '2016-01-01']
 
-for i in range(3):
-    startdate_i = startdatelist[i]
-    if i == 2:
-        #the last release in 2016-01-01 is only releasing particles for one year. 
-        #Since a particle released on 2015-01-01 is backtracked until 2013-01-01 (end of current data availability)
-        runtime_releasedays = int(runtime_days/2)
-    else: 
- 
-        runtime_releasedays = runtime_days
-        
-    pset = ParticleSet.from_list(fieldset=fieldset, pclass=PlasticParticle,
-                                 time = np.datetime64(startdate_i),
-                                 repeatdt=timedelta(hours=24).total_seconds(),
-                                 lon = fieldMesh_x_re,
-                                 lat = fieldMesh_y_re)
+for i2 in range(2):
     
-    filename_run1 = os.path.join(homedir,"{}.nc".format(outfile + 'r' + str(i+1) + '_run'))
-    filename_run2 = os.path.join(homedir,"{}.nc".format(outfile + 'r' + str(i+1) + '_rerun'))
-    
-    output_file = pset.ParticleFile(name=filename_run1, outputdt=timedelta(hours=24))
-      
+    for i in range(3):
+        startdate_i = startdatelist[i]
+        if i == 2:
+            #the last release in 2016-01-01 is only releasing particles for one year. 
+            #Since a particle released on 2015-01-01 is backtracked until 2013-01-01 (end of current data availability)
+            runtime_releasedays = int(runtime_days/2)
+        else: 
      
-    kernels = (pset.Kernel(AdvectionRK4) + pset.Kernel(StokesUV) + pset.Kernel(BeachTesting) + pset.Kernel(UnBeaching)
-                + pset.Kernel(DiffusionUniformKh)  +  pset.Kernel(Ageing)
-                + pset.Kernel(BeachTesting) + pset.Kernel(UnBeaching))       
-    
-    pset.execute(kernels,
-                 #-1 because you repeat, first day is not taken into account. Prevents too many particles from being released.
-                 runtime=timedelta(days=(runtime_releasedays - 1)),
-                 dt=fw*timedelta(hours=2),
-                 output_file=output_file,
-                 recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
-    output_file.close()
-    
-    print('Sleeping 30 secs...')
-    time.sleep(30)
-    
-    #after particles have been released for two years, simulate these for two more years without releasing
-    #to make sure that all particles have been advected for at least two years
-    #redundant data (trajectories after more than 730 days) is deleted in post-processing
-    pset = ParticleSet.from_particlefile(fieldset=fieldset, pclass=PlasticParticle,
-                                          filename=filename_run1, restart=True, restarttime = np.nanmin)
-    
-    output_file2 = pset.ParticleFile(name=filename_run2, outputdt=timedelta(hours=24))
-    
-    pset.execute(kernels,
-                 runtime=timedelta(days=runtime_days),
-                 dt=fw*timedelta(hours=2),
-                 output_file=output_file2,
-                 recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
-    
-    output_file2.close()
+            runtime_releasedays = runtime_days
+            
+        pset = ParticleSet.from_list(fieldset=fieldset, pclass=PlasticParticle,
+                                     time = np.datetime64(startdate_i),
+                                     repeatdt=timedelta(hours=24).total_seconds(),
+                                     lon = fieldMesh_x_re,
+                                     lat = fieldMesh_y_re)
+        
+        filename_run1 = os.path.join(homedir,"{}.nc".format(outfile + 'r' + str(i+1) + '_run_' + str(i2)) )
+        filename_run2 = os.path.join(homedir,"{}.nc".format(outfile + 'r' + str(i+1) + '_rerun_' + str(i2)) )
+        
+        output_file = pset.ParticleFile(name=filename_run1, outputdt=timedelta(hours=24))
+          
+         
+        kernels = (pset.Kernel(AdvectionRK4) + pset.Kernel(StokesUV) + pset.Kernel(BeachTesting) + pset.Kernel(UnBeaching)
+                    + pset.Kernel(DiffusionUniformKh)  +  pset.Kernel(Ageing)
+                    + pset.Kernel(BeachTesting) + pset.Kernel(UnBeaching))       
+        
+        pset.execute(kernels,
+                     #-1 because you repeat, first day is not taken into account. Prevents too many particles from being released.
+                     runtime=timedelta(days=(runtime_releasedays - 1)),
+                     dt=fw*timedelta(hours=2),
+                     output_file=output_file,
+                     recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
+        output_file.close()
+        
+        print('Sleeping 30 secs...')
+        time.sleep(30)
+        
+        #after particles have been released for two years, simulate these for two more years without releasing
+        #to make sure that all particles have been advected for at least two years
+        #redundant data (trajectories after more than 730 days) is deleted in post-processing
+        pset = ParticleSet.from_particlefile(fieldset=fieldset, pclass=PlasticParticle,
+                                              filename=filename_run1, restart=True, restarttime = np.nanmin)
+        
+        output_file2 = pset.ParticleFile(name=filename_run2, outputdt=timedelta(hours=24))
+        
+        pset.execute(kernels,
+                     runtime=timedelta(days=runtime_days),
+                     dt=fw*timedelta(hours=2),
+                     output_file=output_file2,
+                     recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
+        
+        output_file2.close()
