@@ -5,6 +5,8 @@ import xarray as xr
 from parcels.tools.converters import Geographic, GeographicPolar 
 import math
 import parcels.rng as ParcelsRandom
+import time
+import os
 
 file_coast = 'Datafiles//datafile_coastMask_297x_375y'
 coastMask  = np.genfromtxt(file_coast, delimiter=None)
@@ -28,6 +30,8 @@ startlat = 51.566
 fw = -1
 
 outfile = str(startplace + '_'+ startdate + '_')
+
+homedir = '/scratch/kaand004/BayesianAnalysis/'
 
 #find nearest coastal cell to defined beaching location, to release in water        
 def nearestcoastcell(lon,lat):
@@ -283,7 +287,10 @@ for i in range(3):
                                  lon = fieldMesh_x_re,
                                  lat = fieldMesh_y_re)
     
-    output_file = pset.ParticleFile(name="results/{}.nc".format(outfile + 'r' + str(i+1) + '_run'), outputdt=timedelta(hours=24))
+    filename_run1 = os.path.join(homedir,"{}.nc".format(outfile + 'r' + str(i+1) + '_run'))
+    filename_run2 = os.path.join(homedir,"{}.nc".format(outfile + 'r' + str(i+1) + '_rerun'))
+    
+    output_file = pset.ParticleFile(name=filename_run1, outputdt=timedelta(hours=24))
       
      
     kernels = (pset.Kernel(AdvectionRK4) + pset.Kernel(StokesUV) + pset.Kernel(BeachTesting) + pset.Kernel(UnBeaching)
@@ -297,13 +304,17 @@ for i in range(3):
                  output_file=output_file,
                  recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds})
     output_file.close()
+    
+    print('Sleeping 30 secs...')
+    time.sleep(30)
+    
     #after particles have been released for two years, simulate these for two more years without releasing
     #to make sure that all particles have been advected for at least two years
     #redundant data (trajectories after more than 730 days) is deleted in post-processing
     pset = ParticleSet.from_particlefile(fieldset=fieldset, pclass=PlasticParticle,
-                                          filename="results/{}.nc".format(outfile+str(i)), restart=True, restarttime = np.nanmin)
+                                          filename=filename_run1, restart=True, restarttime = np.nanmin)
     
-    output_file2 = pset.ParticleFile(name="results/{}.nc".format(outfile + 'r' + str(i+1) + '_rerun'), outputdt=timedelta(hours=24))
+    output_file2 = pset.ParticleFile(name=filename_run2, outputdt=timedelta(hours=24))
     
     pset.execute(kernels,
                  runtime=timedelta(days=runtime_days),
