@@ -1,3 +1,8 @@
+"""
+Simulation with high resolution Stokes (1.5km) and no additional tidal forcing (standard case)
+"""
+
+
 from parcels import FieldSet, ParticleSet, JITParticle, ErrorCode, Field, VectorField, Variable
 import numpy as np
 from datetime import timedelta, datetime
@@ -78,8 +83,6 @@ class PlasticParticle(JITParticle):
     age = Variable('age', dtype=np.float32, initial=0., to_write=True)
     # beached : 0 sea, 1 beached, 2 after non-beach dyn, 3 after beach dyn, 4 please unbeach, 5 out of bounds
     beached = Variable('beached',dtype=np.int32,initial=0., to_write=False)
-#     U_tide = Variable('U_tide', dtype=np.float32, initial=0., to_write=False)    
-#     V_tide = Variable('V_tide', dtype=np.float32, initial=0., to_write=False)   
 
 #%%
 #---------------unbeaching
@@ -196,76 +199,6 @@ def UnBeaching(particle, fieldset, time):
 def Ageing(particle, fieldset, time):      
     particle.age += particle.dt   
 
-# #-----------------tides--------------
-# t0 = datetime(1900,1,1,0,0) # origin of time = 1 January 1900, 00:00:00 UTC
-# fieldset.add_constant('t0rel', (day_start - t0).total_seconds()) # number of seconds elapsed between t0 and starttime   
-# files_eastward = '/data/oceanparcels/input_data/FES2014Data/eastward_velocity/'
-# files_northward = '/data/oceanparcels/input_data/FES2014Data/northward_velocity/'
-    
-# deg2rad = math.pi/180.0 # factor to convert degrees to radians
-
-# def create_fieldset_tidal_currents(name,filename):
-#     '''
-#     Create fieldset for a given type of tide (name = M2, S2, K1, or O1)
-#     '''
-#     filename_U = files_eastward + '%s.nc' %filename
-#     filename_V = files_northward + '%s.nc' %filename
-       
-#     filenames = {'Ua%s'%name: filename_U,
-#                  'Ug%s'%name: filename_U,
-#                  'Va%s'%name: filename_V,
-#                  'Vg%s'%name: filename_V}
-#     variables = {'Ua%s'%name: 'Ua',
-#                  'Ug%s'%name: 'Ug',
-#                  'Va%s'%name: 'Va',
-#                  'Vg%s'%name: 'Vg'}
-#     dimensions = {'lat': 'lat',
-#                   'lon': 'lon'}
-    
-#     fieldset_tmp = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical')
-    
-#     exec('fieldset_tmp.Ua%s.set_scaling_factor(1e-2)'%name)
-#     exec('fieldset_tmp.Ug%s.set_scaling_factor(deg2rad)'%name) # convert from degrees to radians
-#     exec('fieldset_tmp.Va%s.set_scaling_factor(1e-2)'%name) #cm/s to m/s
-#     exec('fieldset_tmp.Vg%s.set_scaling_factor(deg2rad)'%name)
-    
-#     exec('fieldset_tmp.Ua%s.units = GeographicPolar()'%name)
-#     exec('fieldset_tmp.Va%s.units = Geographic()'%name)
-    
-#     exec('fieldset.add_field(fieldset_tmp.Ua%s)'%name)
-#     exec('fieldset.add_field(fieldset_tmp.Ug%s)'%name)
-#     exec('fieldset.add_field(fieldset_tmp.Va%s)'%name)
-#     exec('fieldset.add_field(fieldset_tmp.Vg%s)'%name)
-
-# create_fieldset_tidal_currents('M2','conv_m2')
-# create_fieldset_tidal_currents('S2','conv_s2')
-# create_fieldset_tidal_currents('K1','conv_k1')
-# create_fieldset_tidal_currents('O1','conv_o1')
-# create_fieldset_tidal_currents('M4','conv_m4')
-# create_fieldset_tidal_currents('MS4','conv_ms4')
-# create_fieldset_tidal_currents('S4','conv_s4')
-
-# omega_M2 = 28.9841042 # angular frequency of M2 in degrees per hour
-# fieldset.add_constant('omegaM2', (omega_M2 * deg2rad) / 3600.0) # angular frequency of M2 in radians per second
-
-# omega_S2 = 30.0000000 # angular frequency of S2 in degrees per hour
-# fieldset.add_constant('omegaS2', (omega_S2 * deg2rad) / 3600.0) # angular frequency of S2 in radians per second
-
-# omega_K1 = 15.0410686 # angular frequency of K1 in degrees per hour
-# fieldset.add_constant('omegaK1', (omega_K1 * deg2rad) / 3600.0) # angular frequency of K1 in radians per second
-
-# omega_O1 = 13.9430356 # angular frequency of O1 in degrees per hour
-# fieldset.add_constant('omegaO1', (omega_O1 * deg2rad) / 3600.0) # angular frequency of O1 in radians per second 
-
-# #source for summation of frequencies: (Andersen, 1999)
-# omega_M4 = omega_M2 + omega_M2 # angular frequency of S2 in degrees per hour
-# fieldset.add_constant('omegaM4', (omega_M4 * deg2rad) / 3600.0) # angular frequency of S2 in radians per second
-
-# omega_MS4 = omega_M2 + omega_S2 # angular frequency of K1 in degrees per hour
-# fieldset.add_constant('omegaMS4', (omega_MS4 * deg2rad) / 3600.0) # angular frequency of K1 in radians per second
-
-# omega_S4 = omega_S2 + omega_S2 # angular frequency of O1 in degrees per hour
-# fieldset.add_constant('omegaS4', (omega_S4 * deg2rad) / 3600.0) # angular frequency of O1 in radians per second  
 #%%
 #release particles for two years and advect for two years.
 #releasing three times separately, to prevent having to advect once for 6 years resulting in long runtimes and large files with lots of redundant data

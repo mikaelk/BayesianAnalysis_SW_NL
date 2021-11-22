@@ -1,3 +1,7 @@
+"""
+Simulation with high resolution Stokes and with extra tides according to Sterl et al.
+"""
+
 from parcels import FieldSet, ParticleSet, JITParticle, ErrorCode, Field, VectorField, Variable
 import numpy as np
 from datetime import timedelta, datetime
@@ -7,6 +11,7 @@ import math
 import parcels.rng as ParcelsRandom
 import time
 import os
+
 
 file_coast = 'Datafiles//datafile_coastMask_297x_375y'
 coastMask  = np.genfromtxt(file_coast, delimiter=None)
